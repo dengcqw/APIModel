@@ -1,0 +1,72 @@
+[
+    {
+        "id": 14677,
+        "name": "订舱-新增",
+        "topName": "BookingNew"
+    },
+    {
+        "id": 14678,
+        "name": "订舱-删除",
+        "topName": "BookingDel"
+    },
+    {
+        "id": 14679,
+        "name": "订舱-查看详情",
+        "topName": "BookingDetail"
+    },
+    {
+        "id": 14680,
+        "name": "订舱-列表",
+        "topName": "BookingList"
+    },
+    {
+        "id": 14681,
+        "name": "订舱-修改",
+        "topName": "BookingEdit"
+    },
+    {
+        "id": 14685,
+        "name": "发货上报-列表",
+        "topName": "SendGoodsList"
+    },
+    {
+        "id": 14687,
+        "name": "发货上报-新增",
+        "topName": "SendGoodsNew"
+    },
+    {
+        "id": 14693,
+        "name": "发货上报-编辑",
+        "topName": "SendGoodsEdit"
+    },
+    {
+        "id": 14691,
+        "name": "发货上报-详情",
+        "topName": "SendGoodsDetail"
+    },
+    {
+        "id": 14695,
+        "name": "发货上报-删除",
+        "topName": "SendGoodsDel"
+    },
+    {
+        "id": 14698,
+        "name": "提货上报-列表",
+        "topName": "TakeDeliveryList"
+    },
+    {
+        "id": 14700,
+        "name": "发货上报-详情",
+        "topName": "TakeDeliveryDetail"
+    },
+    {
+        "id": 14708,
+        "name": "提货上报-编辑",
+        "topName": "TakeDeliveryEdit"
+    },
+    {
+        "id": 14716,
+        "name": "转运中心、代理区模糊查询",
+        "topName": "RegionSearch"
+    }
+]

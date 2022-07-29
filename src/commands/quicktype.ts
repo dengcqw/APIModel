@@ -28,7 +28,7 @@ export async function quicktypeJSON(targetLanguage: string, typeName: string, js
 }
 
 // schema to code
-export async function quicktypeJSONSchema(targetLanguage: string, typeName: string, jsonSchemaString: string) {
+export async function quicktypeJSONSchema(targetLanguage: string, typeName: string, jsonSchemaString: string, leadingComments: string[]) {
   const schemaInput = new JSONSchemaInput(new FetchingJSONSchemaStore());
 
   // We could add multiple schemas for multiple types,
@@ -45,7 +45,6 @@ export async function quicktypeJSONSchema(targetLanguage: string, typeName: stri
       "density": "normal",
       "initializers": "false",
       "coding-keys": "false",
-      "protocol": "jtcustom",
       "struct-or-class": "class",
       "mutable-properties": "true",
       "use-default-value": "true",
@@ -55,10 +54,12 @@ export async function quicktypeJSONSchema(targetLanguage: string, typeName: stri
   return await quicktype({
     inputData,
     lang: targetLanguage,
+    leadingComments,
     rendererOptions
   });
 }
 
+/*
 async function main() {
   const { lines: swiftPerson } = await quicktypeJSON(
     "swift",
@@ -74,3 +75,4 @@ async function main() {
   );
   console.log(pythonPerson.join("\n"));
 }
+*/
