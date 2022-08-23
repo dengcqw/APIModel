@@ -49,6 +49,11 @@ export async function quicktypeJSONSchema(targetLanguage: string, typeName: stri
       "mutable-properties": "true",
       "use-default-value": "true",
     }
+  } else if (targetLanguage == 'typescript') {
+    rendererOptions = {
+      "just-types":"true",
+      "raw-type": "any",
+    }
   }
 
   return await quicktype({

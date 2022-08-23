@@ -131,7 +131,8 @@ const Generate = (id: string, cookie: string, topName: string, dir: string, lang
           //console.log("----> mergedPath", mergedPath);
 
           schemaToCode(lang, topName, merged, descData).then((codeData) => {
-            let codePath = writeFile(codeData, Path.resolve(dir).concat("/"+topName+"."+lang));
+            let suffix = lang == "typescript" ? "ts" : lang
+            let codePath = writeFile(codeData, Path.resolve(dir).concat("/"+topName+"."+suffix));
             console.log("----> codePath", codePath);
           });
         });
@@ -145,7 +146,8 @@ const Generate = (id: string, cookie: string, topName: string, dir: string, lang
             //let paramPath = writeFile(merged);
             //console.log("----> paramSchema", paramPath)
             schemaToCode(lang, topName+"Params", merged, descData).then((codeData) => {
-                let codePath = writeFile(codeData, Path.resolve(dir).concat("/"+topName+"Params."+lang));
+                let suffix = lang == "typescript" ? "ts" : lang
+                let codePath = writeFile(codeData, Path.resolve(dir).concat("/"+topName+"Params."+suffix));
                 console.log("----> paramsCodePath", codePath);
             });
         });
