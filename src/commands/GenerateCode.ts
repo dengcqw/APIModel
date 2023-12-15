@@ -9,6 +9,7 @@ type DescPropType = {
     name: string;
     type: string;
     children?: DescPropType[]
+    priority: number
 }
 
 type DescDataType = {
@@ -86,12 +87,7 @@ const writeFile = (content: any, filePath: string = ""): string => {
   let isStr = typeof content == 'string'
   //console.log("----> string ", typeof content)
   //console.log("----> string ", JSON.stringify(content))
-  fs.writeFile(file, isStr?content:JSON.stringify(content), function (err) {
-    if (err) {
-      return console.error(err);
-    }
-    console.log("数据写入成功！");
-  });
+  fs.writeFileSync(file, isStr?content:JSON.stringify(content), {flag: "a"})
   return file;
 };
 
@@ -101,7 +97,7 @@ const Generate = (id: string, cookie: string, topName: string, dir: string, lang
     return
   }
   const instance = axios.create({
-    baseURL: "http://192.168.1.74:8080/",
+    baseURL: "http://10.66.70.74:8080/",
     timeout: 10000,
     headers: {
       Cookie: cookie,
@@ -111,6 +107,7 @@ const Generate = (id: string, cookie: string, topName: string, dir: string, lang
   });
 
   Promise.all([instance.get(`interface/get?id=${id}`), instance.get(`app/mock/template/${id}`)]).then((responses) => {
+    console.log("----> response", id);
     console.log("----> response", responses[0].status);
     console.log("----> response", responses[1].status);
     let data = responses[0].data as DescRespType
@@ -120,6 +117,23 @@ const Generate = (id: string, cookie: string, topName: string, dir: string, lang
     //let apiPath = writeFile(apiData);
     //console.log("----> descPath", descPath);
     //console.log("----> apiPath", apiPath);
+    let paramData = extractRequsetParams(data.data.requestProperties)
+    // let paramPath = writeFile(paramData);
+    // console.log("----> paramData", paramData)
+
+    function doGenerate(data: any, name: string) {
+      if (data == null) return
+      jsonToSchema(data, topName+name).then((schemaData) => {
+          let merged = mergeDescToSchema(descData, schemaData);
+          //let paramPath = writeFile(merged);
+          //console.log("----> paramSchema", paramPath)
+          schemaToCode(lang, topName+name, merged, descData).then((codeData) => {
+              let suffix = lang == "typescript" ? "ts" : lang
+              let codePath = writeFile(codeData, Path.resolve(dir).concat("/Models/"+topName+"."+suffix));
+              console.log("----> paramsCodePath", codePath);
+          });
+      });
+    }
 
     if (apiData) {
         jsonToSchema(apiData, topName).then((schemaData) => {
@@ -132,25 +146,14 @@ const Generate = (id: string, cookie: string, topName: string, dir: string, lang
 
           schemaToCode(lang, topName, merged, descData).then((codeData) => {
             let suffix = lang == "typescript" ? "ts" : lang
-            let codePath = writeFile(codeData, Path.resolve(dir).concat("/"+topName+"."+suffix));
+            let codePath = writeFile(codeData, Path.resolve(dir).concat("/Models/"+topName+"."+suffix));
             console.log("----> codePath", codePath);
+            doGenerate(paramData, 'Params')
           });
         });
     }
-    let paramData = extractRequsetParams(data.data.requestProperties)
-    //let paramPath = writeFile(paramData);
-    //console.log("----> paramData", paramPath)
-    if (paramData) {
-        jsonToSchema(paramData, topName+"Params").then((schemaData) => {
-            let merged = mergeDescToSchema(descData, schemaData);
-            //let paramPath = writeFile(merged);
-            //console.log("----> paramSchema", paramPath)
-            schemaToCode(lang, topName+"Params", merged, descData).then((codeData) => {
-                let suffix = lang == "typescript" ? "ts" : lang
-                let codePath = writeFile(codeData, Path.resolve(dir).concat("/"+topName+"Params."+suffix));
-                console.log("----> paramsCodePath", codePath);
-            });
-        });
+    if (!apiData) {
+      doGenerate(paramData, 'Params')
     }
   });
 
