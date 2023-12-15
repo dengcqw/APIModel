@@ -18,8 +18,8 @@ function traverse(jsonObj, map) {
     }
 }
 
-
 const merge = function(desc, schema) {
+  // 生成字段和描述的字典
   let properties = desc['properties']
   var nameDescMap = {}
   for (let i = 0, len = properties.length; i < len; i++) {

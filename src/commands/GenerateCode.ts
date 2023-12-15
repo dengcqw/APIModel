@@ -6,11 +6,11 @@ import { quicktypeJSON, quicktypeJSONSchema } from "./quicktype";
 const mergeDescToSchema = require("./mergeDescToSchema.js");
 
 type DescPropType = {
-    name: string;
-    type: string;
-    children?: DescPropType[]
-    priority: number
-}
+  name: string;
+  type: string;
+  children?: DescPropType[];
+  priority: number;
+};
 
 type DescDataType = {
   id: number;
@@ -21,7 +21,7 @@ type DescDataType = {
     name: string;
     description: string;
   }[];
-  requestProperties: DescPropType[]
+  requestProperties: DescPropType[];
 };
 
 type DescRespType = {
@@ -41,22 +41,22 @@ const extractDescription = (resp: DescRespType): DescDataType => {
     };
   });
   //console.log("----> properties length = ", properties.length)
-  return { name, url, method, id, properties, requestProperties:[]};
+  return { name, url, method, id, properties, requestProperties: [] };
 };
 
 const extractRequsetParams = (resp: DescPropType[]): object => {
-  var params = {}
+  var params = {};
   resp.forEach((element) => {
-      if (element.children && element.children.length) {
-        // @ts-ignore
-        params[element.name] = [extractRequsetParams(element.children)]
-      } else {
-        // @ts-ignore
-        params[element.name] = ""
-      }
-  })
-  return params
-}
+    if (element.children && element.children.length) {
+      // @ts-ignore
+      params[element.name] = [extractRequsetParams(element.children)];
+    } else {
+      // @ts-ignore
+      params[element.name] = "";
+    }
+  });
+  return params;
+};
 
 type APITemplateRespType = {
   code: number;
@@ -77,24 +77,26 @@ const jsonToSchema = async (json: any, name: string): Promise<any> => {
 };
 
 const schemaToCode = async (lang: string, name: any, schema: string, desc: DescDataType): Promise<string> => {
-  const { lines } = await quicktypeJSONSchema(lang, name, JSON.stringify(schema), [desc.id + ". " + desc.name, desc.method + " " + desc.url]);
+  const { lines } = await quicktypeJSONSchema(lang, name, JSON.stringify(schema), [
+    desc.id + ". " + desc.name,
+    desc.method + " " + desc.url,
+  ]);
   //console.log("----> msg", lines)
-  return lines.join('\n');
+  return lines.join("\n");
 };
 
 const writeFile = (content: any, filePath: string = ""): string => {
   let file = filePath == "" ? tempfile.path() : filePath;
-  let isStr = typeof content == 'string'
+  let isStr = typeof content == "string";
   //console.log("----> string ", typeof content)
   //console.log("----> string ", JSON.stringify(content))
-  fs.writeFileSync(file, isStr?content:JSON.stringify(content), {flag: "a"})
+  fs.writeFileSync(file, isStr ? content : JSON.stringify(content), { flag: "a" });
   return file;
 };
 
 const Generate = (id: string, cookie: string, topName: string, dir: string, lang: string): any => {
   if (lang.length == 0) {
-    throw Error("--lang 必填")
-    return
+    throw new Error("--lang 必填");
   }
   const instance = axios.create({
     baseURL: "http://10.66.70.74:8080/",
@@ -108,52 +110,58 @@ const Generate = (id: string, cookie: string, topName: string, dir: string, lang
 
   Promise.all([instance.get(`interface/get?id=${id}`), instance.get(`app/mock/template/${id}`)]).then((responses) => {
     console.log("----> response", id);
-    console.log("----> response", responses[0].status);
-    console.log("----> response", responses[1].status);
-    let data = responses[0].data as DescRespType
+    console.log("----> response schema status", responses[0].status);
+    console.log("----> response template status", responses[1].status);
+
+    // 接口字段描述
+    let data = responses[0].data as DescRespType;
     let descData = extractDescription(data);
     //let descPath = writeFile(descData);
-    let apiData = extractData(responses[1].data);
-    //let apiPath = writeFile(apiData);
     //console.log("----> descPath", descPath);
-    //console.log("----> apiPath", apiPath);
-    let paramData = extractRequsetParams(data.data.requestProperties)
+    // 获取参数字段
+    let paramData = extractRequsetParams(data.data.requestProperties);
     // let paramPath = writeFile(paramData);
     // console.log("----> paramData", paramData)
 
+    // 接口返回的json模板
+    let apiData = extractData(responses[1].data);
+    //let apiPath = writeFile(apiData);
+    //console.log("----> apiPath", apiPath);
+
+    // 生成参数code
     function doGenerate(data: any, name: string) {
-      if (data == null) return
-      jsonToSchema(data, topName+name).then((schemaData) => {
-          let merged = mergeDescToSchema(descData, schemaData);
-          //let paramPath = writeFile(merged);
-          //console.log("----> paramSchema", paramPath)
-          schemaToCode(lang, topName+name, merged, descData).then((codeData) => {
-              let suffix = lang == "typescript" ? "ts" : lang
-              let codePath = writeFile(codeData, Path.resolve(dir).concat("/Models/"+topName+"."+suffix));
-              console.log("----> paramsCodePath", codePath);
-          });
+      if (data == null) return;
+      jsonToSchema(data, topName + name).then((schemaData) => {
+        let merged = mergeDescToSchema(descData, schemaData);
+        //let paramPath = writeFile(merged);
+        //console.log("----> paramSchema", paramPath)
+        schemaToCode(lang, topName + name, merged, descData).then((codeData) => {
+          let suffix = lang == "typescript" ? "ts" : lang;
+          let codePath = writeFile(codeData, Path.resolve(dir).concat("/Models/" + topName + "." + suffix));
+          console.log("----> paramsCodePath", codePath);
+        });
       });
     }
 
     if (apiData) {
-        jsonToSchema(apiData, topName).then((schemaData) => {
-          //let schemaPath = writeFile(schemaData);
-          //console.log("----> schemaPath", schemaPath);
+      jsonToSchema(apiData, topName).then((schemaData) => {
+        //let schemaPath = writeFile(schemaData);
+        //console.log("----> schemaPath", schemaPath);
 
-          let merged = mergeDescToSchema(descData, schemaData);
-          //let mergedPath = writeFile(merged);
-          //console.log("----> mergedPath", mergedPath);
+        let merged = mergeDescToSchema(descData, schemaData);
+        //let mergedPath = writeFile(merged);
+        //console.log("----> mergedPath", mergedPath);
 
-          schemaToCode(lang, topName, merged, descData).then((codeData) => {
-            let suffix = lang == "typescript" ? "ts" : lang
-            let codePath = writeFile(codeData, Path.resolve(dir).concat("/Models/"+topName+"."+suffix));
-            console.log("----> codePath", codePath);
-            doGenerate(paramData, 'Params')
-          });
+        schemaToCode(lang, topName, merged, descData).then((codeData) => {
+          let suffix = lang == "typescript" ? "ts" : lang;
+          let codePath = writeFile(codeData, Path.resolve(dir).concat("/Models/" + topName + "." + suffix));
+          console.log("----> codePath", codePath);
+          doGenerate(paramData, "Params");
         });
+      });
     }
     if (!apiData) {
-      doGenerate(paramData, 'Params')
+      doGenerate(paramData, "Params");
     }
   });
 
