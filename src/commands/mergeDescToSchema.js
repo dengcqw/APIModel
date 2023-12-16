@@ -19,6 +19,7 @@ function traverse(jsonObj, map) {
 }
 
 const merge = function(desc, schema) {
+  if (desc == null || schema == null) return undefined
   // 生成字段和描述的字典
   let properties = desc['properties']
   var nameDescMap = {}

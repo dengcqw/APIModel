@@ -1,171 +1,169 @@
-import axios from "axios";
-import * as fs from "fs";
-import * as Path from "path";
-import tempfile from "temping";
-import { quicktypeJSON, quicktypeJSONSchema } from "./quicktype";
-const mergeDescToSchema = require("./mergeDescToSchema.js");
+import axios from 'axios'
+import * as fs from 'fs'
+import * as Path from 'path'
+import tempfile from 'temping'
+import { quicktypeJSON, quicktypeJSONSchema } from './quicktype'
+const mergeDescToSchema = require('./mergeDescToSchema.js')
 
 type DescPropType = {
-  name: string;
-  type: string;
-  children?: DescPropType[];
-  priority: number;
-};
+  name: string
+  type: string
+  children?: DescPropType[]
+  priority: number
+}
 
 type DescDataType = {
-  id: number;
-  name: string;
-  url: string;
-  method: string;
+  id: number
+  name: string
+  url: string
+  method: string
   properties: {
-    name: string;
-    description: string;
-  }[];
-  requestProperties: DescPropType[];
-};
+    name: string
+    description: string
+  }[]
+}
 
 type DescRespType = {
-  data: DescDataType;
-};
+  data: DescDataType
+}
 
 const extractDescription = (resp: DescRespType): DescDataType => {
-  let data = resp["data"];
-  let name = data.name;
-  let url = data.url;
-  let method = data.method;
-  let id = data.id;
-  let properties = data.properties.map((obj) => {
+  let data = resp['data']
+  let name = data.name
+  let url = data.url
+  let method = data.method
+  let id = data.id
+  let properties = data.properties.map(obj => {
     return {
       name: obj.name,
-      description: obj.description,
-    };
-  });
-  //console.log("----> properties length = ", properties.length)
-  return { name, url, method, id, properties, requestProperties: [] };
-};
+      description: obj.description
+    }
+  })
+  return { name, url, method, id, properties }
+}
 
 const extractRequsetParams = (resp: DescPropType[]): object => {
-  var params = {};
-  resp.forEach((element) => {
+  var params = {}
+  resp.forEach(element => {
     if (element.children && element.children.length) {
       // @ts-ignore
-      params[element.name] = [extractRequsetParams(element.children)];
+      params[element.name] = [extractRequsetParams(element.children)]
     } else {
       // @ts-ignore
-      params[element.name] = "";
+      params[element.name] = ''
     }
-  });
-  return params;
-};
+  })
+  return params
+}
 
 type APITemplateRespType = {
-  code: number;
-  data: any;
-  fail: boolean;
-  msg: string;
-  succ: boolean;
-};
-
-const extractData = (resp: APITemplateRespType): any => {
-  return resp.data;
-};
+  code: number
+  data: any
+  fail: boolean
+  msg: string
+  succ: boolean
+}
 
 const jsonToSchema = async (json: any, name: string): Promise<any> => {
-  const { lines } = await quicktypeJSON("schema", name, JSON.stringify(json));
-  //console.log("----> msg", lines)
-  return JSON.parse(lines.join("\n"));
-};
+  if (json == null) return undefined
+  const { lines } = await quicktypeJSON('schema', name, JSON.stringify(json))
+  return JSON.parse(lines.join('\n'))
+}
 
-const schemaToCode = async (lang: string, name: any, schema: string, desc: DescDataType): Promise<string> => {
+const schemaToCode = async (lang: string, name: string, schema: any, desc: DescDataType): Promise<string> => {
+  // 检查是不是基础类型
+  if (schema == null) return `type ${name} = undefined`
+  let definitions = schema.definitions[name]
+  if (definitions.properties == null) {
+    if (definitions.type !== 'object') {
+      return `type ${name} = $(definitions.type)`
+    }
+  }
+
   const { lines } = await quicktypeJSONSchema(lang, name, JSON.stringify(schema), [
-    desc.id + ". " + desc.name,
-    desc.method + " " + desc.url,
-  ]);
-  //console.log("----> msg", lines)
-  return lines.join("\n");
-};
+    desc.id + '. ' + desc.name,
+    desc.method + ' ' + desc.url
+  ])
+  return lines.join('\n')
+}
 
-const writeFile = (content: any, filePath: string = ""): string => {
-  let file = filePath == "" ? tempfile.path() : filePath;
-  let isStr = typeof content == "string";
+/*
+function isNotEmptyObject(data: any) {
+  if (typeof data === 'object') {
+    return Object.keys(data).length > 0
+  }
+  return false
+}
+*/
+
+const writeFile = (content: any, filePath: string = ''): string => {
+  let file = filePath == '' ? tempfile.path() : filePath
+  let isStr = typeof content == 'string'
   //console.log("----> string ", typeof content)
   //console.log("----> string ", JSON.stringify(content))
-  fs.writeFileSync(file, isStr ? content : JSON.stringify(content), { flag: "a" });
-  return file;
-};
+  fs.writeFileSync(file, isStr ? content : JSON.stringify(content), { flag: 'a' })
+  return file
+}
 
-const Generate = (id: string, cookie: string, topName: string, dir: string, lang: string): any => {
+const Generate = (id: string, cookie: string, topName: string, dir: string, lang: string) => {
   if (lang.length == 0) {
-    throw new Error("--lang 必填");
+    throw new Error('--lang 必填')
   }
   const instance = axios.create({
-    baseURL: "http://10.66.70.74:8080/",
+    baseURL: 'http://rap.jms.com:8080/',
     timeout: 10000,
     headers: {
       Cookie: cookie,
-      "User-Agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36",
-    },
-  });
-
-  Promise.all([instance.get(`interface/get?id=${id}`), instance.get(`app/mock/template/${id}`)]).then((responses) => {
-    console.log("----> response", id);
-    console.log("----> response schema status", responses[0].status);
-    console.log("----> response template status", responses[1].status);
-
-    // 接口字段描述
-    let data = responses[0].data as DescRespType;
-    let descData = extractDescription(data);
-    //let descPath = writeFile(descData);
-    //console.log("----> descPath", descPath);
-    // 获取参数字段
-    let paramData = extractRequsetParams(data.data.requestProperties);
-    // let paramPath = writeFile(paramData);
-    // console.log("----> paramData", paramData)
-
-    // 接口返回的json模板
-    let apiData = extractData(responses[1].data);
-    //let apiPath = writeFile(apiData);
-    //console.log("----> apiPath", apiPath);
-
-    // 生成参数code
-    function doGenerate(data: any, name: string) {
-      if (data == null) return;
-      jsonToSchema(data, topName + name).then((schemaData) => {
-        let merged = mergeDescToSchema(descData, schemaData);
-        //let paramPath = writeFile(merged);
-        //console.log("----> paramSchema", paramPath)
-        schemaToCode(lang, topName + name, merged, descData).then((codeData) => {
-          let suffix = lang == "typescript" ? "ts" : lang;
-          let codePath = writeFile(codeData, Path.resolve(dir).concat("/Models/" + topName + "." + suffix));
-          console.log("----> paramsCodePath", codePath);
-        });
-      });
+      'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36'
     }
+  })
 
-    if (apiData) {
-      jsonToSchema(apiData, topName).then((schemaData) => {
-        //let schemaPath = writeFile(schemaData);
-        //console.log("----> schemaPath", schemaPath);
+  Promise.all([
+    instance.get(`interface/get?id=${id}`), // 获取接口的完整数据（JSON）
+    instance.get(`app/mock/data/${id}?scope=response`), // 获取单个接口数据的模板（JSON Schema）
+    instance.get(`app/mock/data/${id}?scope=request`) // 获取单个接口参数的模板（JSON Schema）
+  ]).then(async responses => {
+    console.log(
+      '----> API', topName,
+      id,
+      ', desc',
+      responses[0].status,
+      ', response',
+      responses[1].status,
+      ' request',
+      responses[2].status
+    )
 
-        let merged = mergeDescToSchema(descData, schemaData);
-        //let mergedPath = writeFile(merged);
-        //console.log("----> mergedPath", mergedPath);
+    // 提取接口字段描述
+    let data = responses[0].data as DescRespType
+    let descData = extractDescription(data)
+    /*console.log("----> descPath", writeFile(descData));*/
 
-        schemaToCode(lang, topName, merged, descData).then((codeData) => {
-          let suffix = lang == "typescript" ? "ts" : lang;
-          let codePath = writeFile(codeData, Path.resolve(dir).concat("/Models/" + topName + "." + suffix));
-          console.log("----> codePath", codePath);
-          doGenerate(paramData, "Params");
-        });
-      });
-    }
-    if (!apiData) {
-      doGenerate(paramData, "Params");
-    }
-  });
+    let dataName = topName + 'Data'
+    let paramsName = topName + 'Params'
 
-  return null;
-};
+    let dataMock = responses[1].data.data
+    let responseSchema = await jsonToSchema(dataMock, dataName)
+    responseSchema = mergeDescToSchema(descData, responseSchema)
+    /*console.log("----> responseSchema", writeFile(responseSchema))*/
 
-export default Generate;
+    let paramsMock = responses[2].data
+    let requestSchema = await jsonToSchema(paramsMock, paramsName)
+    requestSchema = mergeDescToSchema(descData, requestSchema)
+    console.log('----> requestSchema', writeFile(requestSchema))
+
+    //let mergedPath = writeFile(merged);
+    //console.log("----> mergedPath", mergedPath);
+
+    let suffix = lang == 'typescript' ? 'ts' : lang
+    let dataCode = await schemaToCode(lang, dataName, responseSchema, descData)
+    let paramCode = await schemaToCode(lang, paramsName, requestSchema, descData)
+    let codePath = writeFile(paramCode + '\n' + dataCode, Path.resolve(dir).concat('/' + topName + '.' + suffix))
+    console.log('----> codePath', codePath)
+  })
+
+  return null
+}
+
+export default Generate

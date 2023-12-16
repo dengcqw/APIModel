@@ -1,6 +1,6 @@
 [
     {
-        "id": "28944",
+        "id": "45234",
         "name": "首页接口获取(装修版)",
         "url": "/sands-lms/api/v1/homePageDecorate/getInfo",
         "topName": "HomeConfig",

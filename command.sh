@@ -1,1 +1,2 @@
-/Users/dengjinlong/Documents/APIModel/bin/dev batchgenerate --cookie "koa.sid=LeuAzdb51ypqj5F3b_2NnS14dAzj8eAG; koa.sid.sig=KYAFodugc_Palb6T-A3vV-8AeLY" --config ./apiconfig.json --lang typescript ./Models
+COOKIE=`cat cookie`
+/Users/dengjinlong/Documents/APIModel/bin/dev batchgenerate --cookie "$COOKIE" --config ./apiconfig.json --lang typescript ./Models
