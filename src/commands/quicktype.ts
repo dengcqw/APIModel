@@ -59,6 +59,9 @@ export async function quicktypeJSONSchema(targetLanguage: string, typeName: stri
   return await quicktype({
     inputData,
     lang: targetLanguage,
+    inferDateTimes: false,
+    inferIntegerStrings: false,
+    inferBooleanStrings: false,
     leadingComments,
     rendererOptions
   });

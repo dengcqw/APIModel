@@ -1,10 +1,8 @@
-[
-    {
-        "id": "45234",
-        "name": "首页接口获取(装修版)",
-        "url": "/sands-lms/api/v1/homePageDecorate/getInfo",
-        "topName": "HomeConfig",
-        "module": "首页接口",
-        "method": "POST"
-    }
-]
+[{
+    "id": "45363",
+    "url": "/bosum-lms/api/v1/member/bind-email",
+    "method": "POST",
+    "name": "绑定邮箱",
+    "module": "会员",
+    "topName": "MemberBindEmail"
+}]

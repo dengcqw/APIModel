@@ -1,3 +1,4 @@
+//@ts-nocheck
 import axios from 'axios'
 import * as fs from 'fs'
 import * as Path from 'path'
@@ -25,6 +26,7 @@ type DescDataType = {
 
 type DescRespType = {
   data: DescDataType
+  errMsg: string
 }
 
 const extractDescription = (resp: DescRespType): DescDataType => {
@@ -46,22 +48,12 @@ const extractRequsetParams = (resp: DescPropType[]): object => {
   var params = {}
   resp.forEach(element => {
     if (element.children && element.children.length) {
-      // @ts-ignore
       params[element.name] = [extractRequsetParams(element.children)]
     } else {
-      // @ts-ignore
       params[element.name] = ''
     }
   })
   return params
-}
-
-type APITemplateRespType = {
-  code: number
-  data: any
-  fail: boolean
-  msg: string
-  succ: boolean
 }
 
 const jsonToSchema = async (json: any, name: string): Promise<any> => {
@@ -72,19 +64,29 @@ const jsonToSchema = async (json: any, name: string): Promise<any> => {
 
 const schemaToCode = async (lang: string, name: string, schema: any, desc: DescDataType): Promise<string> => {
   // 检查是不是基础类型
-  if (schema == null) return `type ${name} = undefined`
+  if (schema == null) return `export type ${name} = void`
   let definitions = schema.definitions[name]
-  if (definitions.properties == null) {
+  if (definitions && definitions.properties == null) {
     if (definitions.type !== 'object') {
-      return `type ${name} = $(definitions.type)`
+      return `export type ${name} = $(definitions.type)`
     }
   }
+  let arrayType = schema.type ==='array' ? `export type ${name}Array = ${name}[]\n\n` : ''
 
   const { lines } = await quicktypeJSONSchema(lang, name, JSON.stringify(schema), [
     desc.id + '. ' + desc.name,
     desc.method + ' ' + desc.url
   ])
-  return lines.join('\n')
+  // 修改indent
+  return arrayType + lines.map(e => {
+    if (e == null) return e
+    let txt = e.replace(';', '')
+    if (txt.startsWith('    ')) {
+      return txt.slice(2)
+    } else {
+      return txt
+    }
+  }).join('\n')
 }
 
 /*
@@ -99,13 +101,13 @@ function isNotEmptyObject(data: any) {
 const writeFile = (content: any, filePath: string = ''): string => {
   let file = filePath == '' ? tempfile.path() : filePath
   let isStr = typeof content == 'string'
-  //console.log("----> string ", typeof content)
-  //console.log("----> string ", JSON.stringify(content))
+  // console.log("----> string ", typeof content)
+  // console.log("----> string ", JSON.stringify(content))
   fs.writeFileSync(file, isStr ? content : JSON.stringify(content), { flag: 'a' })
   return file
 }
 
-const Generate = (id: string, cookie: string, topName: string, dir: string, lang: string) => {
+const Generate = async (id: string, cookie: string, topName: string, dir: string, lang: string): Promise<void> => {
   if (lang.length == 0) {
     throw new Error('--lang 必填')
   }
@@ -119,7 +121,7 @@ const Generate = (id: string, cookie: string, topName: string, dir: string, lang
     }
   })
 
-  Promise.all([
+  await Promise.all([
     instance.get(`interface/get?id=${id}`), // 获取接口的完整数据（JSON）
     instance.get(`app/mock/data/${id}?scope=response`), // 获取单个接口数据的模板（JSON Schema）
     instance.get(`app/mock/data/${id}?scope=request`) // 获取单个接口参数的模板（JSON Schema）
@@ -137,6 +139,10 @@ const Generate = (id: string, cookie: string, topName: string, dir: string, lang
 
     // 提取接口字段描述
     let data = responses[0].data as DescRespType
+    if (data && data.errMsg != null) {
+      console.error('---->', id, topName, data)
+      return
+    }
     let descData = extractDescription(data)
     /*console.log("----> descPath", writeFile(descData));*/
 
@@ -144,26 +150,28 @@ const Generate = (id: string, cookie: string, topName: string, dir: string, lang
     let paramsName = topName + 'Params'
 
     let dataMock = responses[1].data.data
+    if (dataMock) {
+      if (dataMock.ascs) dataMock.ascs = undefined
+      if (dataMock.descs) dataMock.descs = undefined
+      if (dataMock.maxId) dataMock.maxId = undefined
+    }
+
     let responseSchema = await jsonToSchema(dataMock, dataName)
+    // console.log("----> responseSchema", responseSchema ? writeFile(responseSchema) : '')
     responseSchema = mergeDescToSchema(descData, responseSchema)
-    /*console.log("----> responseSchema", writeFile(responseSchema))*/
 
     let paramsMock = responses[2].data
     let requestSchema = await jsonToSchema(paramsMock, paramsName)
+    // console.log('----> requestSchema',requestSchema ? writeFile(requestSchema) : '')
     requestSchema = mergeDescToSchema(descData, requestSchema)
-    console.log('----> requestSchema', writeFile(requestSchema))
 
-    //let mergedPath = writeFile(merged);
-    //console.log("----> mergedPath", mergedPath);
-
-    let suffix = lang == 'typescript' ? 'ts' : lang
+    let suffix = lang === 'typescript' ? 'ts' : lang
+    let ignoreEslint = '/* eslint no-use-before-define: 0, @typescript-eslint/no-explicit-any: 0 */ \n\n'
     let dataCode = await schemaToCode(lang, dataName, responseSchema, descData)
     let paramCode = await schemaToCode(lang, paramsName, requestSchema, descData)
-    let codePath = writeFile(paramCode + '\n' + dataCode, Path.resolve(dir).concat('/' + topName + '.' + suffix))
-    console.log('----> codePath', codePath)
+    let codePath = writeFile(ignoreEslint + paramCode + '\n' + dataCode, Path.resolve(dir).concat('/' + topName + '.' + suffix))
+    // console.log('----> codePath', codePath)
   })
-
-  return null
 }
 
 export default Generate
