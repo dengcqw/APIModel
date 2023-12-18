@@ -53,6 +53,7 @@ export async function quicktypeJSONSchema(targetLanguage: string, typeName: stri
     rendererOptions = {
       "just-types":"true",
       "raw-type": "any",
+      "acronym-style": 'original'
     }
   }
 

@@ -62,23 +62,29 @@ const jsonToSchema = async (json: any, name: string): Promise<any> => {
   return JSON.parse(lines.join('\n'))
 }
 
-const schemaToCode = async (lang: string, name: string, schema: any, desc: DescDataType): Promise<string> => {
+const schemaToCode = async (lang: string, name: string, schema: any, desc: DescDataType, isParams: boolean): Promise<string> => {
   // 检查是不是基础类型
-  if (schema == null) return `export type ${name} = void`
+  if (schema == null) {
+    if (isParams) return ''
+    return `export type ${name} = void`
+  }
   let definitions = schema.definitions[name]
   if (definitions && definitions.properties == null) {
     if (definitions.type !== 'object') {
       return `export type ${name} = $(definitions.type)`
+    } else if (isParams) { // params 不处理生成定义, 不支持空定义
+      return ''
     }
   }
-  let arrayType = schema.type ==='array' ? `export type ${name}Array = ${name}[]\n\n` : ''
+  const isArray = schema.type ==='array'
+  let arrayType = isArray ? `export type ${name} = ${name}Record[]\n\n` : ''
 
-  const { lines } = await quicktypeJSONSchema(lang, name, JSON.stringify(schema), [
+  const {lines} = await quicktypeJSONSchema(lang, isArray ? name + 'Record' : name, JSON.stringify(schema), [
     desc.id + '. ' + desc.name,
     desc.method + ' ' + desc.url
   ])
   // 修改indent
-  return arrayType + lines.map(e => {
+  return lines.map(e => {
     if (e == null) return e
     let txt = e.replace(';', '')
     if (txt.startsWith('    ')) {
@@ -86,7 +92,7 @@ const schemaToCode = async (lang: string, name: string, schema: any, desc: DescD
     } else {
       return txt
     }
-  }).join('\n')
+  }).join('\n') + arrayType
 }
 
 /*
@@ -167,8 +173,8 @@ const Generate = async (id: string, cookie: string, topName: string, dir: string
 
     let suffix = lang === 'typescript' ? 'ts' : lang
     let ignoreEslint = '/* eslint no-use-before-define: 0, @typescript-eslint/no-explicit-any: 0 */ \n\n'
-    let dataCode = await schemaToCode(lang, dataName, responseSchema, descData)
-    let paramCode = await schemaToCode(lang, paramsName, requestSchema, descData)
+    let dataCode = await schemaToCode(lang, dataName, responseSchema, descData, false)
+    let paramCode = await schemaToCode(lang, paramsName, requestSchema, descData, true)
     let codePath = writeFile(ignoreEslint + paramCode + '\n' + dataCode, Path.resolve(dir).concat('/' + topName + '.' + suffix))
     // console.log('----> codePath', codePath)
   })
