@@ -1,42 +1,26 @@
 [
-    {
-        "id": "49387",
-        "name": "生成练习试卷（开始练习）",
-        "url": "/sands-lms/api/v1/practise/generatePaper",
-        "topName": "GeneratePractice",
-        "module": "练习相关接口",
-        "method": "POST"
-    },
-    {
-        "id": "49414",
-        "name": "我的练习(分页)",
-        "url": "/sands-lms/api/v1/practise/myPractisePage",
-        "topName": "PracticeList",
-        "module": "练习相关接口",
-        "method": "GET"
-    },
-    {
-        "id": "49388",
-        "name": "练习详情",
-        "url": "/sands-lms/api/v1/practise/get",
-        "topName": "PracticeDetail",
-        "module": "练习相关接口",
-        "method": "GET"
-    },
-    {
-        "id": "49390",
-        "name": "练习试题答案提交",
-        "url": "/sands-lms/api/v1/practise/question/answerSubmit",
-        "topName": "PracticeSubmit",
-        "module": "练习相关接口",
-        "method": "POST"
-    },
-    {
-        "id": "49391",
-        "name": "修改练习答题时长",
-        "url": "/sands-lms/api/v1/practise/updateDoTime",
-        "topName": "PracticeUpdateTime",
-        "module": "练习相关接口",
-        "method": "POST"
-    }
+  {
+    "id": "53743",
+    "url": "/sands-lms/api/v1/face2face/getByStudent",
+    "method": "POST",
+    "name": "面授详情",
+    "module": "[学员端]面授相关接口",
+    "topName": "OfflineTrainingDetail"
+  },
+  {
+    "id": "53744",
+    "url": "/sands-lms/api/v1/face2face/pageByStudent",
+    "method": "POST",
+    "name": "我的面授",
+    "module": "[学员端]面授相关接口",
+    "topName": "OfflineTrainingList"
+  },
+  {
+    "id": "53745",
+    "url": "/sands-lms/api/v1/face2face/showMembers",
+    "method": "POST",
+    "name": "面授-展示成员",
+    "module": "[学员端]面授相关接口",
+    "topName": "OfflineTrainingMembers"
+  }
 ]

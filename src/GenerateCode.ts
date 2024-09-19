@@ -163,7 +163,7 @@ const Generate = async (id: string, cookie: string, topName: string, dir: string
     let descData = extractDescription(data)
     /*console.log("----> descPath", writeFile(descData));*/
 
-    let dataName = topName + 'Data'
+    let dataName = topName
     let paramsName = topName + 'Params'
 
     let dataMock = responses[1].data.data

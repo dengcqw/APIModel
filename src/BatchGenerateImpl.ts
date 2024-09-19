@@ -5,11 +5,11 @@ export type ConfigType = {
   topName: string
 }[]
 
-const BatchGenerateXXX = (config: ConfigType, cookie: string, outputdir: string, lang: string): void => {
+const BatchGenerate = (config: ConfigType, cookie: string, outputdir: string, lang: string): void => {
   config.forEach(value => {
     console.log('----> generate', value.id, value.topName)
     GenerateCode(value.id, cookie, value.topName, outputdir, lang)
   })
 }
 
-export default BatchGenerateXXX
+export default BatchGenerate

@@ -39,7 +39,7 @@ export async function quicktypeJSONSchema(
   jsonSchemaString: string,
   leadingComments: string[]
 ): Promise<SerializedRenderResult> {
-  console.log('---->jsonSchemaString', jsonSchemaString)
+  //console.log('---->jsonSchemaString', jsonSchemaString)
   const schemaInput = new JSONSchemaInput(new FetchingJSONSchemaStore())
 
   // We could add multiple schemas for multiple types,
