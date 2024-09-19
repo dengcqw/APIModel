@@ -1,6 +1,18 @@
 {
-  "extends": [
-    "oclif",
-    "oclif-typescript"
-  ]
+  "extends": [ "prettier", "standard", "oclif", "oclif-typescript"],
+  "rules": {
+    "eqeqeq": "off",
+    "react/prop-types": "off",
+    "space-before-function-paren": ["error", { "anonymous": "always", "named": "never", "asyncArrow": "always" }],
+    "multiline-ternary": ["off"],
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": ["error", { "args": "none" }],
+    "no-tabs": "off",
+    "semi": "off",
+    "comma-dangle": "off",
+    "object-curly-spacing": "off",
+    "spaced-comment": "off",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "n/no-callback-literal": 0,
+  }
 }

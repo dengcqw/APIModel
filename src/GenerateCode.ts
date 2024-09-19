@@ -1,10 +1,9 @@
-//@ts-nocheck
 import axios from 'axios'
 import * as fs from 'fs'
 import * as Path from 'path'
 import tempfile from 'temping'
 import { quicktypeJSON, quicktypeJSONSchema } from './quicktype'
-const mergeDescToSchema = require('./mergeDescToSchema.js')
+import { merge as mergeDescToSchema } from './mergeDescToSchema.js'
 
 type DescPropType = {
   name: string
@@ -62,7 +61,13 @@ const jsonToSchema = async (json: any, name: string): Promise<any> => {
   return JSON.parse(lines.join('\n'))
 }
 
-const schemaToCode = async (lang: string, name: string, schema: any, desc: DescDataType, isParams: boolean): Promise<string> => {
+const schemaToCode = async (
+  lang: string,
+  name: string,
+  schema: any,
+  desc: DescDataType,
+  isParams: boolean
+): Promise<string> => {
   // 检查是不是基础类型
   if (schema == null) {
     if (isParams) return ''
@@ -72,27 +77,32 @@ const schemaToCode = async (lang: string, name: string, schema: any, desc: DescD
   if (definitions && definitions.properties == null) {
     if (definitions.type !== 'object') {
       return `export type ${name} = $(definitions.type)`
-    } else if (isParams) { // params 不处理生成定义, 不支持空定义
+    } else if (isParams) {
+      // params 不处理生成定义, 不支持空定义
       return ''
     }
   }
-  const isArray = schema.type ==='array'
+  const isArray = schema.type === 'array'
   let arrayType = isArray ? `export type ${name} = ${name}Record[]\n\n` : ''
 
-  const {lines} = await quicktypeJSONSchema(lang, isArray ? name + 'Record' : name, JSON.stringify(schema), [
+  const { lines } = await quicktypeJSONSchema(lang, isArray ? name + 'Record' : name, JSON.stringify(schema), [
     desc.id + '. ' + desc.name,
     desc.method + ' ' + desc.url
   ])
   // 修改indent
-  return lines.map(e => {
-    if (e == null) return e
-    let txt = e.replace(';', '')
-    if (txt.startsWith('    ')) {
-      return txt.slice(2)
-    } else {
-      return txt
-    }
-  }).join('\n') + arrayType
+  return (
+    lines
+      .map(e => {
+        if (e == null) return e
+        let txt = e.replace(';', '')
+        if (txt.startsWith('    ')) {
+          return txt.slice(2)
+        } else {
+          return txt
+        }
+      })
+      .join('\n') + arrayType
+  )
 }
 
 /*
@@ -133,7 +143,8 @@ const Generate = async (id: string, cookie: string, topName: string, dir: string
     instance.get(`app/mock/data/${id}?scope=request`) // 获取单个接口参数的模板（JSON Schema）
   ]).then(async responses => {
     console.log(
-      '----> API', topName,
+      '----> API',
+      topName,
       id,
       ', desc',
       responses[0].status,
@@ -175,7 +186,10 @@ const Generate = async (id: string, cookie: string, topName: string, dir: string
     let ignoreEslint = '/* eslint no-use-before-define: 0, @typescript-eslint/no-explicit-any: 0 */ \n\n'
     let dataCode = await schemaToCode(lang, dataName, responseSchema, descData, false)
     let paramCode = await schemaToCode(lang, paramsName, requestSchema, descData, true)
-    let codePath = writeFile(ignoreEslint + paramCode + '\n' + dataCode, Path.resolve(dir).concat('/' + topName + '.' + suffix))
+    let codePath = writeFile(
+      ignoreEslint + paramCode + '\n' + dataCode,
+      Path.resolve(dir).concat('/' + topName + '.' + suffix)
+    )
     // console.log('----> codePath', codePath)
   })
 }

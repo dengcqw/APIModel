@@ -1,11 +1,11 @@
 import {Command, Flags} from '@oclif/core'
-import BatchGenerateImpl from '../BatchGenerateImpl'
+import BatchGenerateImpl from '../../BatchGenerateImpl'
 
 export default class Generate extends Command {
   static description = 'Generate api model from RAP2操作平台'
 
   static examples = [
-    `APIModel generate --id 123 --cookie acookie --topName Classname --lang swift outputdir`,
+    `APIModel generate --id 123 --cookie acookie --topName Classname --lang dart [outputdir]`,
   ]
 
   static flags = {

@@ -5,10 +5,11 @@
     "module": "commonjs",
     "outDir": "dist",
     "rootDir": "src",
-    "strict": true,
+    "strict": false,
     "target": "es2019",
+    "allowSyntheticDefaultImports": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*.ts"
   ]
 }

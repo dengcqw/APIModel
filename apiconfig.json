@@ -1,8 +1,42 @@
-[{
-    "id": "45363",
-    "url": "/bosum-lms/api/v1/member/bind-email",
-    "method": "POST",
-    "name": "绑定邮箱",
-    "module": "会员",
-    "topName": "MemberBindEmail"
-}]
+[
+    {
+        "id": "49387",
+        "name": "生成练习试卷（开始练习）",
+        "url": "/sands-lms/api/v1/practise/generatePaper",
+        "topName": "GeneratePractice",
+        "module": "练习相关接口",
+        "method": "POST"
+    },
+    {
+        "id": "49414",
+        "name": "我的练习(分页)",
+        "url": "/sands-lms/api/v1/practise/myPractisePage",
+        "topName": "PracticeList",
+        "module": "练习相关接口",
+        "method": "GET"
+    },
+    {
+        "id": "49388",
+        "name": "练习详情",
+        "url": "/sands-lms/api/v1/practise/get",
+        "topName": "PracticeDetail",
+        "module": "练习相关接口",
+        "method": "GET"
+    },
+    {
+        "id": "49390",
+        "name": "练习试题答案提交",
+        "url": "/sands-lms/api/v1/practise/question/answerSubmit",
+        "topName": "PracticeSubmit",
+        "module": "练习相关接口",
+        "method": "POST"
+    },
+    {
+        "id": "49391",
+        "name": "修改练习答题时长",
+        "url": "/sands-lms/api/v1/practise/updateDoTime",
+        "topName": "PracticeUpdateTime",
+        "module": "练习相关接口",
+        "method": "POST"
+    }
+]
